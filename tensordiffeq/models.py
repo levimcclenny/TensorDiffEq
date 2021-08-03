@@ -231,7 +231,6 @@ class DiscoveryModel():
 
     # print(np.shape(self.X_in))
 
-    @tf.function
     def loss(self):
         u_pred = self.u_model(tf.concat(self.X, 1))
         f_u_pred = self.f_model(self.u_model, self.vars, *self.X_in)
@@ -240,7 +239,6 @@ class DiscoveryModel():
         else:
             return MSE(u_pred, self.u) + MSE(f_u_pred, constant(0.0))
 
-    @tf.function
     def grad(self):
         with tf.GradientTape() as tape:
             loss_value = self.loss()
@@ -252,7 +250,6 @@ class DiscoveryModel():
         self.variables = self.u_model.trainable_variables
         len_ = self.len_
         if self.col_weights is not None:
-
             self.variables.extend([self.col_weights])
             self.variables.extend(self.vars)
             loss_value, grads = self.grad()
@@ -262,11 +259,8 @@ class DiscoveryModel():
         else:
             self.variables.extend(self.vars)
             loss_value, grads = self.grad()
-
             self.tf_optimizer.apply_gradients(zip(grads[:-(len_ + 1)], self.u_model.trainable_variables))
-
             self.tf_optimizer_vars.apply_gradients(zip(grads[-len_:], self.vars))
-
         return loss_value
 
     def fit(self, tf_iter):
@@ -283,7 +277,6 @@ class DiscoveryModel():
                     # print('It: %d, Time: %.2f' % (i, elapsed))
                     # tf.print(f"loss_value: {loss_value}")
                     var = [var.numpy() for var in self.vars]
-                    t.set_postfix(loss=loss_value.numpy())
-                    t.set_postfix(vars=var)
+                    t.set_postfix(loss=loss_value.numpy(), vars=var)
                     # tf.print(f"vars estimate(s): {var}")
                     # start_time = time.time()
